@@ -3,7 +3,7 @@ name: Deploy Estadisticas Vidal Casino to AWS EKS
 on:
   push:
     branches:
-      - dev
+      - deploy
 
 jobs:
   build-and-push:
@@ -27,11 +27,12 @@ jobs:
       - name: Build and Push Docker Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: vidalcasino-estadisticas
-          IMAGE_TAG: latest
+          ECR_REPOSITORY: estadisticas-service
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
   deploy-to-eks:
     needs: build-and-push
@@ -50,8 +51,10 @@ jobs:
 
       - name: Update Kubeconfig for EKS
         run: |
-          aws eks update-kubeconfig --region us-east-1 --name vidal-casino-cluster
+          aws eks update-kubeconfig --region us-east-1 --name vidalcasino-clusterv1
 
       - name: Deploy Manifests to EKS
         run: |
-          kubectl rollout restart deployment/vidalcasino-estadisticas-deployment || true
+          kubectl apply -f k8s/
+          kubectl apply -f hpa.yaml
+          kubectl rollout restart deployment/estadisticas-service
