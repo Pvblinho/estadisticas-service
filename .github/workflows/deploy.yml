@@ -3,7 +3,7 @@ name: Deploy Estadisticas Vidal Casino to AWS EKS
 on:
   push:
     branches:
-      - deploy
+      - dev
 
 jobs:
   build-and-push:
@@ -50,7 +50,7 @@ jobs:
 
       - name: Update Kubeconfig for EKS
         run: |
-          aws eks update-kubeconfig --region us-east-1 --name vidalcasino-cluster
+          aws eks update-kubeconfig --region us-east-1 --name vidal-casino-cluster
 
       - name: Deploy Manifests to EKS
         run: |
